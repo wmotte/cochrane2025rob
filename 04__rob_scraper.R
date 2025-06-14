@@ -309,15 +309,10 @@ all <- NULL
 # get infiles
 infiles <- list.files( 'out.03.cochrane.downloads/', '*_references.html' )
 
-
-# scrape
-#urls <- c( "out.03.cochrane.downloads/14651858.CD000985.pub3_references.html",
-#            "out.03.cochrane.downloads/14651858.CD000984.pub3_references.html" )
-
-
-for( infile in infiles[1:24] )
+ind <- 1
+for( infile in infiles )
 {
-    print( infile )
+    print( paste0( "[", ind, "] -> ", infile ) ); ind <- ind + 1
     url <- paste0( 'out.03.cochrane.downloads/', infile )
     
     # get raw utf-8 formatted list 
@@ -347,8 +342,9 @@ all <- reorder_risk_columns_flexible( all )
 all <- all %>%
     mutate(
         primary_outcomes = sapply( Outcomes, extract_primary ),
-        secondary_outcomes = sapply( Outcomes, extract_secondary )
-    )
+        secondary_outcomes = sapply( Outcomes, extract_secondary ) )
 
+# write to disk
+readr::write_tsv( all, paste0( outdir, '/scraped_rob.tsv' ), quote = "needed" )
 
 
