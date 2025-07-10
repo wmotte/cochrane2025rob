@@ -52,3 +52,35 @@ length(unique(paste0(out$file, "-", out$Analysis.group, "-", out$Analysis.number
 length(unique(paste0(out$file, "-", out$Analysis.group, "-", out$Analysis.number)[!is.na(out$Bias.due.to.deviations.from.intended.interventions..judgement.)]))
 
 write.csv(out, file.path(outdir, 'rob2.csv'), row.names = FALSE, na = "")
+
+
+# add separate risk of bias files ("risk-of-bias")
+# This is a very different formating, might it be RoB 1 again?
+outdir <- 'out.03.zips'
+dirs   <- list.dirs(outdir)
+dirs   <- dirs[grepl("study-data", dirs)]
+
+out <- list()
+for(i in seq_along(dirs)) {
+
+  dir   <- dirs[i]
+  files <- list.files(dir)
+
+  # select estimates data
+  files <- files[grepl("risk-of-bias", files)]
+
+  for(j in seq_along(files)) {
+    file <- files[j]
+    df   <- read.csv(file.path(dir, file))
+
+    if(nrow(df) == 0)
+      next
+
+    df$dir  <- dir
+    df$file <- file
+    out[[length(out) + 1]] <- df
+  }
+}
+
+# rbind all data frames into one (fill in empty columns with NA)
+out <- dplyr::bind_rows(out)
