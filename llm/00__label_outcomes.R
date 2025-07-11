@@ -28,7 +28,7 @@ i <- 1
 
 # TODO
 # loop over 4000 files ...
-for( html_infile in html_infiles[ 1:20 ] )
+for( html_infile in html_infiles[ 1:100 ] )
 {
     print( i )
     i <- i + 1
@@ -121,7 +121,7 @@ for( html_infile in html_infiles[ 1:20 ] )
         if( file.exists( input_llm_file ) & !file.exists( output_llm_file ) )
         {
             print( paste0( "*** 1. PROCESSING LLM LABELING ***: ", input_llm_file ) )
-            command <- paste0( "./llm_labeler.py ", "-i ", input_llm_file, " -o ", output_llm_file )
+            command <- paste0( "./llm_labeler_gemini.py ", "-i ", input_llm_file, " -o ", output_llm_file )
             system( command )
         }
         
