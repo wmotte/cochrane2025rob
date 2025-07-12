@@ -26,9 +26,9 @@ html_infiles <- df$infile
 
 i <- 1
 
-# TODO
-# loop over 4000 files ...
-for( html_infile in html_infiles[ 1:100 ] )
+# loop over 4060 files
+#for( html_infile in html_infiles[ 1:20 ] )
+for( html_infile in html_infiles[ html_infiles ] )
 {
     print( i )
     i <- i + 1
