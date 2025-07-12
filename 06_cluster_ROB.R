@@ -119,6 +119,8 @@ sort(table(cdf$column_name[cdf$unknown]))
 # this one could be both the "blinding_of_outcome_assessment" or "blinding_of_participants_and_personnel"
 # (especially since there is "performance_bias_and_detection_bias")
 # Blinding_performance_bias_and_detection_bias_All_outcomes
+# From the frequencies, it seems like that it contains both biases simultaneously
+# we could assign both categories, but we keep them separate because we cannot be sure
 
 # verify that only one category was assigned
 cdf$number_cat <- apply(cdf[,c(
@@ -132,3 +134,77 @@ cdf$number_cat <- apply(cdf[,c(
 )], 1, function(x) sum(x))
 table(cdf$number_cat) # only 0/1 parallel categories assigned = correct
 write.csv(cdf, paste0(outdir, '/scraped_rob_long_processed.csv'), row.names = FALSE)
+
+
+# transform long to wide and clean up the table a bit
+cdf$column_RoB <- NA
+cdf$column_RoB[cdf$random_sequence_generation]             <- "Random_sequence_generation"
+cdf$column_RoB[cdf$allocation_concealment]                 <- "Allocation_concealment"
+cdf$column_RoB[cdf$blinding_of_participants_and_personnel] <- "Blinding_of_participants_and_personnel"
+cdf$column_RoB[cdf$blinding_of_outcome_assessment]         <- "Blinding_of_outcome_assessment"
+cdf$column_RoB[cdf$incomplete_outcome_data]                <- "Incomplete_outcome_data"
+cdf$column_RoB[cdf$selective_outcome_reporting]            <- "Selective_outcome_reporting"
+cdf$column_RoB[cdf$other_bias]                             <- "Other_bias"
+table(cdf$column_RoB)
+
+# pilot from long to wide, aggregate multiple ratings from the same
+# category based on RoB1 rules - inheriting the worst rating
+cdf <- cdf[!is.na(cdf$column_RoB),]
+cdf$id <- paste0(cdf$infile, "-", cdf$study_name)
+
+
+RoB_categories <- c(
+  "Random_sequence_generation",
+  "Allocation_concealment",
+  "Blinding_of_participants_and_personnel",
+  "Blinding_of_outcome_assessment",
+  "Incomplete_outcome_data",
+  "Selective_outcome_reporting",
+  "Other_bias"
+)
+
+out <- list()
+for(i in seq_along(unique(cdf$id))) {
+
+  temp <- cdf[cdf$id == unique(cdf$id)[i], ]
+
+  # if there are multiple ratings for the same category, take the worst one
+  temp        <- temp[!duplicated(temp$column_RoB), ]
+  temp_values <- split(temp$column_value, temp$column_RoB)
+
+  if(any(lengths(temp_values) > 1)) {
+    # if there are multiple values for the same category, take the worst one
+    temp_values <- lapply(temp_values, function(x) {
+      if(length(x) > 1) {
+        if(any(x == "High risk")) {
+          return("High risk")
+        } else if(any(x == "Unclear risk")) {
+          return("Unclear risk")
+        } else if(any(x == "Low risk")) {
+          return("Low risk")
+        } else {
+          return(NA)
+        }
+      } else {
+        return(x)
+      }
+    })
+  }
+
+  # fill in missing categories with NA
+  temp_values[RoB_categories[!RoB_categories %in% names(temp_values)]] <- NA
+  # match the order in RoB_categories
+  temp_values <- temp_values[RoB_categories]
+
+  # add remaining information
+  temp_values$infile       <- temp$infile[1]
+  temp_values$study_name   <- temp$study_name[1]
+
+  out[[i]] <- data.frame(temp_values)
+}
+out <- do.call(rbind, out)
+
+# how many studies have all RoB?
+mean(apply(out[, RoB_categories], 1, function(x) all(!is.na(x))))
+
+write.csv(out, paste0(outdir, '/scraped_rob_wide_processed.csv'), row.names = FALSE)
