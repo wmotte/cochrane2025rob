@@ -70,9 +70,12 @@ cdf$blinding_of_outcome_assessment <-
   grepl("Blinding_of_the_Outcome_assessor", cdf$column_name, ignore.case = TRUE) |
   grepl("Blinding_Outcome_assessor", cdf$column_name, ignore.case = TRUE) |
   grepl("Blinding_of_radiological_outcomes", cdf$column_name, ignore.case = TRUE) |
+  grepl("Blinding_of_clinical_outcomes", cdf$column_name, ignore.case = TRUE) |
   grepl("Blinding_of_clinical_outcomes", cdf$column_name, ignore.case = TRUE)
-# Timing_of_outcome_assessment_similar
-# Timing_outcome_assessments
+
+
+# many studies perform both blinding of participants and personnel and blinding of outcome assessment in a single item...
+cdf$blinding_of_participant_personnel_outcome <- grepl("Blinding_performance_bias_and_detection_bias_All_outcomes", cdf$column_name, ignore.case = TRUE)
 
 cdf$incomplete_outcome_data <-
   grepl("Incomplete_outcome_data", cdf$column_name, ignore.case = TRUE) |
@@ -97,6 +100,7 @@ table(cdf$random_sequence_generation)
 table(cdf$allocation_concealment)
 table(cdf$blinding_of_participants_and_personnel)
 table(cdf$blinding_of_outcome_assessment)
+table(cdf$blinding_of_participant_personnel_outcome)
 table(cdf$incomplete_outcome_data)
 table(cdf$selective_outcome_reporting)
 table(cdf$other_bias)
@@ -107,6 +111,7 @@ cdf$unknown <- apply(cdf[,c(
   "allocation_concealment",
   "blinding_of_participants_and_personnel",
   "blinding_of_outcome_assessment",
+  "blinding_of_participant_personnel_outcome",
   "incomplete_outcome_data",
   "selective_outcome_reporting",
   "other_bias"
@@ -128,6 +133,7 @@ cdf$number_cat <- apply(cdf[,c(
   "allocation_concealment",
   "blinding_of_participants_and_personnel",
   "blinding_of_outcome_assessment",
+  "blinding_of_participant_personnel_outcome",
   "incomplete_outcome_data",
   "selective_outcome_reporting",
   "other_bias"
@@ -138,13 +144,14 @@ write.csv(cdf, paste0(outdir, '/scraped_rob_long_processed.csv'), row.names = FA
 
 # transform long to wide and clean up the table a bit
 cdf$column_RoB <- NA
-cdf$column_RoB[cdf$random_sequence_generation]             <- "Random_sequence_generation"
-cdf$column_RoB[cdf$allocation_concealment]                 <- "Allocation_concealment"
-cdf$column_RoB[cdf$blinding_of_participants_and_personnel] <- "Blinding_of_participants_and_personnel"
-cdf$column_RoB[cdf$blinding_of_outcome_assessment]         <- "Blinding_of_outcome_assessment"
-cdf$column_RoB[cdf$incomplete_outcome_data]                <- "Incomplete_outcome_data"
-cdf$column_RoB[cdf$selective_outcome_reporting]            <- "Selective_outcome_reporting"
-cdf$column_RoB[cdf$other_bias]                             <- "Other_bias"
+cdf$column_RoB[cdf$random_sequence_generation]                <- "Random_sequence_generation"
+cdf$column_RoB[cdf$allocation_concealment]                    <- "Allocation_concealment"
+cdf$column_RoB[cdf$blinding_of_participants_and_personnel]    <- "Blinding_of_participants_and_personnel"
+cdf$column_RoB[cdf$blinding_of_outcome_assessment]            <- "Blinding_of_outcome_assessment"
+cdf$column_RoB[cdf$blinding_of_participant_personnel_outcome] <- "Blinding_of_participant_personnel_outcome"
+cdf$column_RoB[cdf$incomplete_outcome_data]                   <- "Incomplete_outcome_data"
+cdf$column_RoB[cdf$selective_outcome_reporting]               <- "Selective_outcome_reporting"
+cdf$column_RoB[cdf$other_bias]                                <- "Other_bias"
 table(cdf$column_RoB)
 
 # pilot from long to wide, aggregate multiple ratings from the same
@@ -158,6 +165,7 @@ RoB_categories <- c(
   "Allocation_concealment",
   "Blinding_of_participants_and_personnel",
   "Blinding_of_outcome_assessment",
+  "Blinding_of_participant_personnel_outcome",
   "Incomplete_outcome_data",
   "Selective_outcome_reporting",
   "Other_bias"
@@ -197,14 +205,11 @@ for(i in seq_along(unique(cdf$id))) {
   temp_values <- temp_values[RoB_categories]
 
   # add remaining information
-  temp_values$infile       <- temp$infile[1]
-  temp_values$study_name   <- temp$study_name[1]
+  temp_values$Review  <- temp$Review[1]
+  temp_values$Study   <- temp$Study[1]
 
   out[[i]] <- data.frame(temp_values)
 }
 out <- do.call(rbind, out)
-
-# how many studies have all RoB?
-mean(apply(out[, RoB_categories], 1, function(x) all(!is.na(x))))
 
 write.csv(out, paste0(outdir, '/scraped_rob_wide_processed.csv'), row.names = FALSE)

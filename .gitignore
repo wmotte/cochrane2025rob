@@ -51,3 +51,9 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# unzipped data files
+out.03.zips/unpacked
+out.03.rm5s/unpacked
+out.04.rob.scraper/scraped_rob.tsv
+out.06.primary.vs.secondary/processing_data
