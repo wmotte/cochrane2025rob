@@ -37,7 +37,7 @@ for(i in seq_along(files)) {
   out[[i]] <- temp_df
 }
 df <- do.call(rbind, out)
-write.csv(df, file.path(outdir, "rm5_data.csv"), row.names = FALSE)
+readr::write_csv(df, file.path(outdir, "rm5_data.csv.gz"))
 
 
 # csv input
@@ -90,4 +90,4 @@ for(i in seq_along(rev_names)) {
 }
 
 df <- do.call(rbind, out)
-write.csv(df, file.path(outdir, "zip_data.csv"), row.names = FALSE)
+readr::write_csv(df, file.path(outdir, "zip_data.csv.gz"))
